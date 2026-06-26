@@ -1,49 +1,85 @@
 # Claude Customer Support Production Capstone
 
-A production-style customer support agent built using the Anthropic Claude API and MCP (Model Context Protocol).
+A production-style AI customer support agent built using the Anthropic Claude API and MCP (Model Context Protocol).
 
-This project started as a simple customer lookup agent and was gradually improved by adding customer verification, refund processing, support ticket creation, session management, structured error handling, and MCP tool integration.
-
----
-
-## Features
-
-- Customer lookup using ID, email, or name
-- Order lookup
-- Refund processing
-- Customer verification before sensitive actions
-- Support ticket creation
-- Structured error responses
-- MCP server integration
-- MCP Inspector testing
-- Session-based customer verification
+This project evolved from a basic customer lookup application into a production-oriented support system featuring customer verification, refund processing, support ticket management, structured error handling, session management, and MCP tool integration. It also demonstrates AI-assisted development using Claude Code workflows.
 
 ---
 
-## Project Structure
+# Features
+
+* Customer lookup using ID, email, or name
+* Order lookup
+* Refund processing
+* Customer verification before sensitive operations
+* Support ticket creation
+* Session-based customer verification
+* Structured JSON error responses
+* MCP Server integration
+* MCP Inspector testing
+* AI-assisted development with Claude Code
+
+---
+
+# Claude Code Tasks Completed
+
+During the project, Claude Code was used to complete real-world engineering tasks by selecting the appropriate built-in tools (Read, Grep, Edit, Bash).
+
+### Task 1 — Restrict Customer Data Exposure
+
+Updated the `get_customer` tool to return only:
+
+* customer_id
+* name
+* email
+* account_status
+
+instead of exposing the complete customer record.
+
+**Result**
+
+Improved customer privacy while preserving existing application functionality.
+
+---
+
+### Task 2 — Add Global Exception Handling
+
+Implemented a catch-all exception handler in the main agent loop.
+
+Features added:
+
+* Structured error responses
+* Exception logging
+* Graceful failure handling
+* Improved production reliability
+
+---
+
+# Project Structure
 
 ```text
 claude-customer-support-production-capstone/
 │
 ├── agent.py
-├── tools.py
 ├── tool_runner.py
+├── tools.py
 ├── mock_data.py
 ├── mcp_server.py
 ├── mcp.json
+├── requirements.txt
 ├── .env
 ├── .gitignore
-├── readme.md
+├── README.md
 │
 └── screenshots/
-    ├── 01-mcp-tools-list.png
-    ├── 02-support-ticket-tool-input.png
-    ├── 03-support-ticket-success.png
-    ├── 04-customer-verification-flow.png
-    └── 05-refund-processing-success.png
+    ├── 01_Task_Prompt.png
+    ├── 02_Code_Search_Grep.png
+    ├── 03_Proposed_Code_Change.png
+    ├── 04_Edit_Approval.png
+    ├── 05_Code_Modification.png
+    ├── 06_Implementation_Progress.png
+    └── 07_Task_Completed.png
 ```
-
----
 
 ---
 
@@ -51,25 +87,20 @@ claude-customer-support-production-capstone/
 
 ## 1. Customer Verification
 
-Before processing refunds, the customer must be verified.
+Before processing refunds, customers must first verify their identity.
 
 ```python
 if not session_state.get("verified_customer_id"):
-    return json.dumps(
-        {
-            "error": {
-                "type": "permission",
-                "retryable": False,
-                "message":
-                "Customer must be verified before refund."
-            }
+    return json.dumps({
+        "error": {
+            "type": "permission",
+            "retryable": False,
+            "message": "Customer must be verified before refund."
         }
-    )
+    })
 ```
 
-### Explanation
-
-This prevents unauthorized users from requesting refunds without first proving their identity.
+This prevents unauthorized refund requests.
 
 ---
 
@@ -82,9 +113,7 @@ session_state = {
 }
 ```
 
-### Explanation
-
-The agent remembers which customer has already been verified during the conversation.
+The agent remembers the verified customer throughout the conversation.
 
 ---
 
@@ -93,44 +122,34 @@ The agent remembers which customer has already been verified during the conversa
 ```python
 {
     "name": "process_refund",
-    "description": (
-        "Process a refund for a verified customer."
-    )
+    "description": "Process a refund for a verified customer."
 }
 ```
 
-### Explanation
-
-This tool allows the agent to initiate refunds after verification checks are completed.
+Allows refunds only after successful verification.
 
 ---
 
-## 4. Support Ticket Creation Tool
+## 4. Support Ticket Creation
 
 ```python
 {
     "name": "create_support_ticket",
-    "description": (
-        "Create a support ticket for unresolved issues."
-    )
+    "description": "Create a support ticket for unresolved issues."
 }
 ```
 
-### Explanation
-
-If a customer issue cannot be solved immediately, the agent can create a support ticket for follow-up.
+Automatically creates tickets for unresolved customer problems.
 
 ---
 
-## 5. Support Ticket Generation
+## 5. Ticket Generation
 
 ```python
 ticket_id = f"TICKET-{random.randint(1000,9999)}"
 ```
 
-### Explanation
-
-Each support ticket receives a unique ticket number.
+Each ticket receives a unique identifier.
 
 ---
 
@@ -146,9 +165,7 @@ Each support ticket receives a unique ticket number.
 }
 ```
 
-### Explanation
-
-Instead of generic failures, the system returns clear and consistent error messages.
+Returns standardized JSON error responses instead of generic failures.
 
 ---
 
@@ -156,17 +173,15 @@ Instead of generic failures, the system returns clear and consistent error messa
 
 ```python
 @mcp.tool()
-def get_customer_tool(query: str) -> str:
+def get_customer_tool(query: str):
     return get_customer(query, session_state)
 ```
 
-### Explanation
-
-This exposes the customer lookup function as an MCP tool.
+Exposes Python functions as MCP tools.
 
 ---
 
-## 8. MCP Server Creation
+## 8. MCP Server
 
 ```python
 from mcp.server.fastmcp import FastMCP
@@ -174,9 +189,7 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("support-agent-tools")
 ```
 
-### Explanation
-
-Creates the MCP server that can expose tools to MCP-compatible clients.
+Creates the MCP server that exposes the available tools.
 
 ---
 
@@ -193,40 +206,49 @@ Creates the MCP server that can expose tools to MCP-compatible clients.
 }
 ```
 
-### Explanation
-
-This configuration tells MCP how to start the server.
+Defines how the MCP server is launched.
 
 ---
 
 ## 10. MCP Inspector Testing
 
-All tools were tested using MCP Inspector:
+Validated every tool using MCP Inspector.
 
-- get_customer_tool
-- lookup_order_tool
-- process_refund_tool
-- create_support_ticket_tool
+Tested tools:
 
-### Explanation
+* get_customer_tool
+* lookup_order_tool
+* process_refund_tool
+* create_support_ticket_tool
 
-MCP Inspector helped verify that every tool worked correctly before deployment.
+---
+
+# Claude Code Workflow
+
+This project demonstrates practical use of Claude Code for AI-assisted software development.
+
+* Used **Grep** to locate the target function.
+* Used **Read** to understand the implementation.
+* Used **Edit** to apply precise code modifications.
+* Approved code changes before execution.
+* Verified implementation after completion.
 
 ---
 
 # Technologies Used
 
-- Python
-- Anthropic Claude API
-- MCP (Model Context Protocol)
-- FastMCP
-- MCP Inspector
-- python-dotenv
-- JSON
+* Python
+* Anthropic Claude API
+* MCP (Model Context Protocol)
+* FastMCP
+* MCP Inspector
+* Claude Code
+* python-dotenv
+* JSON
 
 ---
 
-# Run The Agent
+# Run the Agent
 
 ```bash
 python agent.py
@@ -246,6 +268,6 @@ python mcp_server.py
 
 **Deepak Kumar**
 
-- Blockchain & Web3 Developer
-- Smart Contract Engineer
-- AI Agent Builder
+* Blockchain & Web3 Developer
+* Smart Contract Engineer
+* AI Agent Builder

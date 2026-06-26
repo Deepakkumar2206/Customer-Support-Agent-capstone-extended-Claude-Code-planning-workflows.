@@ -1,3 +1,6 @@
+import json
+import logging
+
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
@@ -5,6 +8,14 @@ from tool_runner import run_tool
 from tools import tools
 
 load_dotenv()
+
+logging.basicConfig(
+    filename="agent_errors.log",
+    level=logging.ERROR,
+    format="%(asctime)s %(levelname)s %(message)s"
+)
+
+logger = logging.getLogger(__name__)
 
 client = Anthropic()
 
@@ -41,62 +52,82 @@ def run_agent(user_message: str) -> str:
         }
     )
 
-    while True:
+    try:
 
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            tools=tools,
-            messages=conversation_history
-        )
+        while True:
 
-        conversation_history.append(
-            {
-                "role": "assistant",
-                "content": response.content
-            }
-        )
-
-        if response.stop_reason == "end_turn":
-
-            final_text = ""
-
-            for block in response.content:
-
-                if hasattr(block, "text"):
-                    final_text += block.text
-
-            return final_text
-
-        if response.stop_reason == "tool_use":
-
-            tool_results = []
-
-            for block in response.content:
-
-                if block.type == "tool_use":
-
-                    result = run_tool(
-                        block.name,
-                        block.input,
-                        session_state
-                    )
-
-                    tool_results.append(
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": block.id,
-                            "content": result
-                        }
-                    )
+            response = client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=1024,
+                system=SYSTEM_PROMPT,
+                tools=tools,
+                messages=conversation_history
+            )
 
             conversation_history.append(
                 {
-                    "role": "user",
-                    "content": tool_results
+                    "role": "assistant",
+                    "content": response.content
                 }
             )
+
+            if response.stop_reason == "end_turn":
+
+                final_text = ""
+
+                for block in response.content:
+
+                    if hasattr(block, "text"):
+                        final_text += block.text
+
+                return final_text
+
+            if response.stop_reason == "tool_use":
+
+                tool_results = []
+
+                for block in response.content:
+
+                    if block.type == "tool_use":
+
+                        result = run_tool(
+                            block.name,
+                            block.input,
+                            session_state
+                        )
+
+                        tool_results.append(
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": result
+                            }
+                        )
+
+                conversation_history.append(
+                    {
+                        "role": "user",
+                        "content": tool_results
+                    }
+                )
+
+    except Exception:
+
+        logger.exception(
+            "Unhandled exception in agent loop. session_state=%s",
+            session_state
+        )
+
+        return json.dumps(
+            {
+                "error": {
+                    "type": "system",
+                    "retryable": True,
+                    "message":
+                    "An internal error occurred. Please try again."
+                }
+            }
+        )
 
 
 if __name__ == "__main__":

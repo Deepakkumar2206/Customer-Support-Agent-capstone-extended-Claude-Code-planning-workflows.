@@ -26,7 +26,14 @@ def get_customer(query: str, session_state: dict) -> str:
                 customer["name"]
             )
 
-            return json.dumps(customer)
+            return json.dumps(
+                {
+                    "customer_id": customer["customer_id"],
+                    "name": customer["name"],
+                    "email": customer["email"],
+                    "account_status": customer["account_status"],
+                }
+            )
 
     return json.dumps(
         {
