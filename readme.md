@@ -264,9 +264,11 @@ python mcp_server.py
 
 ---
 
+# NOTE: The conversations with the claude is inside the "outputs-conversation with the claude" section
+
 # Author
 
-**Deepak Kumar**
+**DeepakKumar**
 
 * Blockchain & Web3 Developer
 * Smart Contract Engineer
